@@ -1,0 +1,239 @@
+Welcome to the second video of this week
+이번 주 두 번째 비디오에 오신 것을 환영합니다
+
+We started out this week by covering the various kinds of sensors most commonly used for perception
+우리는 이번 주에 인식에 가장 일반적으로 사용되는 다양한 종류의 센서를 다루는 것으로 시작했습니다
+
+Now, let's learn how to place these sensors to aggregate a complete view of the environment
+이제, 환경에 대한 완전한 시야를 집계하기 위해 이러한 센서를 배치하는 방법을 배워봅시다
+
+In this video, we will cover the configuration design to meet sensor coverage needs for an autonomous driving car
+이 비디오에서, 우리는 자율주행 자동차의 센서 커버리지 요구를 충족시키기 위해 구성 설계를 다룰 것입니다
+
+We will do this by going through two common scenarios, driving on a highway and driving in an urban environment
+우리는 고속도로에서 운전하고 도시 환경에서 운전하는 두 가지 일반적인 시나리오를 통해 이것을 할 것이다
+
+After analyzing these scenarios, we will lay out the overall coverage requirements and discuss some issues with the design
+이러한 시나리오를 분석한 후, 우리는 전반적인 커버리지 요구 사항을 제시하고 설계와 관련된 몇 가지 문제를 논의할 것입니다
+
+Let's begin by recalling the most commonly available sensors from our last video
+마지막 비디오에서 가장 일반적으로 사용 가능한 센서를 리콜하는 것으로 시작합시다
+
+These are the camera for appearance input
+이것들은 외모 입력을 위한 카메라이다
+
+The stereo camera for depth information, lidar for all whether 3D input, radar for object detection, ultrasonic for short-range 3D input and GNSS/IMU data and wheel odometry for ego state estimation
+깊이 정보를 위한 스테레오 카메라, 3D 입력, 물체 감지용 레이더, 단거리 3D 입력을 위한 초음파 및 자아 상태 추정을 위한 GNSS/IMU 데이터 및 휠 거리계
+
+Also, remember that all of these sensors come in different configurations and have different ranges in fields of view over which they can sense
+또한, 이러한 모든 센서는 다른 구성으로 제공되며 감지할 수 있는 시야 범위가 다르다는 것을 기억하십시오
+
+They have some resolution that depends on the instrument specifics and field of view
+그들은 도구의 세부 사항과 시야에 따라 몇 가지 해상도를 가지고 있다
+
+Before we move to discussing coverage, let's define the deceleration rates we're willing to accept for driving which will drive the detection ranges needed for our sensors
+커버리지에 대해 논의하기 전에, 센서에 필요한 감지 범위를 구동할 운전에 대해 기꺼이 받아들일 감속 속도를 정의해 봅시다
+
+Aggressive deceleration are set at five meters per second squared which is roughly the deceleration you experience when you slam the brakes hard and try to stop abruptly in case of an emergency
+공격적인 감속은 초당 5미터 제곱으로 설정되며, 이는 브레이크를 세게 밟고 비상시 갑자기 멈추려고 할 때 경험하는 감속입니다
+
+Normal decelerations are set to two meters per second squared, which is reasonably comfortable while still allowing the car to come to a stop quickly
+정상적인 감속은 초당 2미터로 설정되며, 이는 차가 빠르게 멈출 수 있도록 하면서 합리적으로 편안합니다
+
+Given a constant deceleration our braking distance d can be computed as follows
+일정한 감속을 감안할 때 우리의 제동 거리 d는 다음과 같이 계산될 수 있다
+
+D is equal to v squared over 2a, where V is the vehicle velocity and a is its rate of deceleration
+D는 2a 이상의 제곱 v와 같으며, 여기서 V는 차량 속도이고 a는 감속 속도이다
+
+We can also factor in reaction time of the system and road surface friction limits, but we'll keep things simple in this discussion
+우리는 또한 시스템의 반응 시간과 도로 표면 마찰 제한을 고려할 수 있지만, 이 논의에서는 일을 단순하게 유지할 것이다
+
+Let's talk about coverage now
+이제 커버리지에 대해 이야기해 봅시다
+
+The question we want to answer is where should we place our sensors so that we have sufficient input for our driving task
+우리가 대답하고 싶은 질문은 운전 작업에 충분한 입력을 가질 수 있도록 센서를 어디에 두어야 하나요
+
+Practically speaking, we want our sensors to capture the ODD we have in mind or the ODD our system can produce decisions for
+실질적으로 말하자면, 우리는 센서가 우리가 염두에 두고 있는 ODD나 시스템이 결정을 내릴 수 있는 ODD를 캡처하기를 원합니다
+
+We should be able to provide all of the decisions with sufficient input
+우리는 충분한 입력으로 모든 결정을 내릴 수 있어야 한다
+
+There can be so many possible scenarios in driving but we'll look at just two common scenarios to see how the requirements drive our sensor selection
+운전에는 많은 시나리오가 있을 수 있지만 요구 사항이 센서 선택을 어떻게 이끄는지 알아보기 위해 두 가지 일반적인 시나리오만 살펴보겠습니다
+
+Will look at highway and urban driving
+고속도로와 도시 운전을 볼 것이다
+
+Let's think about these two situations briefly
+이 두 가지 상황에 대해 간략하게 생각해 봅시다
+
+For a divided highway, we have fast moving traffic, usually high volume, and quite a few lanes to monitor, but all vehicles are moving in the same direction
+분할된 고속도로의 경우, 우리는 빠르게 움직이는 교통량, 보통 높은 볼륨, 모니터링할 수 있는 꽤 많은 차선을 가지고 있지만, 모든 차량은 같은 방향으로 움직이고 있다
+
+The other highlight of driving on a highway setting is that there are fewer and gradual curves and we have exits and merges to consider as well
+고속도로 환경에서 운전하는 또 다른 하이라이트는 점진적인 곡선이 적고 고려해야 할 출구와 합병도 있다는 것이다
+
+On the other hand, in the urban situation we'll consider, we have moderate volume and moderate speed traffic with fewer lanes but with traffic moving in all directions especially through intersections
+반면에, 우리가 고려할 도시 상황에서, 우리는 차선이 적지만 특히 교차로를 통해 모든 방향으로 이동하는 적당한 양과 적당한 속도 교통량을 가지고 있다
+
+Let's start with the highway setting
+고속도로 설정부터 시작합시다
+
+We can break down the highway setting into three basic maneuver needs
+우리는 고속도로 설정을 세 가지 기본적인 기동 요구로 분해할 수 있다
+
+We may need to hit the brakes hard if there's an emergency situation
+긴급 상황이 발생하면 브레이크를 세게 밟아야 할 수도 있습니다
+
+We need to maintain a steady speed matching the flow of traffic around us and we might need to change lanes
+우리는 주변 교통 흐름과 일치하는 꾸준한 속도를 유지해야 하며 차선을 변경해야 할 수도 있습니다
+
+In the case of an emergency stop, if there is a blockage on our road we want to stop in time
+비상 정지의 경우, 도로에 막힘이 있다면 우리는 제시간에 멈추고 싶다
+
+So, applying our stopping distance equation longitudinally, we need to be able to sense about a 110 meters in front of us assuming a highway speed of a 120 kilometers and aggressive deceleration
+그래서, 우리의 정지 거리 방정식을 면적으로 적용하면, 우리는 120km의 고속도로 속도와 공격적인 감속을 가정할 때 우리 앞에서 약 110미터를 감지할 수 있어야 한다
+
+Most self-driving systems aim for sensing ranges of a 150 to 200 meters in front of the vehicle as a result
+대부분의 자율주행 시스템은 결과적으로 차량 앞에서 150~200미터의 범위를 감지하는 것을 목표로 한다
+
+Similarly, to avoid lateral collision or to change lanes to avoid hitting an obstacle in our lane, we need to be able to sense at least our adjacent lanes, which are 37 meters wide in North America
+마찬가지로, 측면 충돌을 피하거나 차선의 장애물을 피하기 위해 차선을 변경하려면 북미에서 37미터 너비의 인접한 차선을 감지할 수 있어야 합니다
+
+To maintain speed during vehicle following, we need to sense the vehicle in our own lane
+차량 추적 중에 속도를 유지하기 위해, 우리는 우리 자신의 차선에서 차량을 감지해야 한다
+
+Both their relative position and the speed are important to maintain a safe following distance
+그들의 상대적인 위치와 속도 모두 안전한 추적 거리를 유지하는 데 중요하다
+
+This is usually defined in units of time for human drivers and set to two seconds in nominal conditions
+이것은 보통 인간 운전자의 시간 단위로 정의되며 명목 조건에서 2초로 설정됩니다
+
+It can also be assessed using aggressive deceleration of the lead vehicle and the reaction time from our ego vehicle
+또한 리드 차량의 공격적인 감속과 자아 차량의 반응 시간을 사용하여 평가할 수 있습니다
+
+So, at a 120 kilometers per hour, relative position and speed measurements to a range of 165 meters are needed and typical systems use 100 meters for this requirement
+따라서 시속 120km에서 165미터 범위의 상대 위치와 속도 측정이 필요하며 일반적인 시스템은 이 요구 사항에 100미터를 사용합니다
+
+Laterally, we need to know what's happening anywhere in our adjacent lanes in case another vehicles seeks to merge into our lane or we need to merge with other traffic
+측면으로, 우리는 다른 차량이 우리의 차선으로 합병하려고 하거나 다른 교통 체증과 합병해야 할 경우를 대비하여 인접한 차선 어디에서나 무슨 일이 일어나고 있는지 알아야 한다
+
+A wide 160 to 180 degree field of view is required to track adjacent lanes and a range of 40 to 60 meters is needed to find space between vehicles
+인접한 차선을 추적하려면 넓은 160도에서 180도 시야가 필요하며 차량 사이의 공간을 찾으려면 40~60미터의 범위가 필요합니다
+
+Finally, let's discuss the lane change maneuver and consider the following scenario
+마지막으로, 차선 변경 동작에 대해 동의하고 다음 시나리오를 고려해 봅시다
+
+Suppose we want to move to the adjacent lane, longitudinally we need to look forward, 
+우리가 인접한 차선으로 이동하고 싶다고 가정해 봅시다 우리는 세로로 기대해야 합니다
+
+so we are a safe distance from the leading vehicle and we also need to look behind just to see what the rear vehicles are doing and laterally it's a bit more complicated
+그래서 우리는 주요 차량으로부터 안전한 거리에 있으며 후방 차량이 무엇을 하고 있는지 보기 위해 뒤를 돌아볼 필요가 있으며 측면에서는 조금 더 복잡합니다
+
+We may need to look beyond just the adjacent lanes
+우리는 인접한 차선 너머를 봐야 할 수도 있다
+
+For example, what if a vehicle attempts to maneuver into the adjacent lane at the same time as we do
+예를 들어, 차량이 우리와 동시에 인접한 차선으로 이동하려고 하면 어떨까요
+
+We'll need to coordinate our lane change room maneuvers so we don't crash
+우리는 충돌하지 않도록 차선 변경 여유 움직임을 조정해야 할 것이다
+
+The sensor requirements for lane changes are roughly equivalent to those in the maintain speed scenario
+차선 변경에 대한 센서 요구 사항은 유지 속도 시나리오의 요구 사항과 거의 동일합니다
+
+As both need to manage vehicles in front of and behind the ego vehicle as well as to each side
+둘 다 자아 차량 앞과 뒤뿐만 아니라 양쪽에서 차량을 관리해야 하기 때문이다
+
+Overall, this gives us the picture for coverage requirements for the highway driving scenario
+전반적으로, 이것은 우리에게 고속도로 운전 시나리오에 대한 커버리지 요구 사항에 대한 그림을 제공한다
+
+We need longitudinal sensors and lateral sensors and both wide field of view and narrow field of view sensors to do these three maneuvers, the emergency stop, maintaining speed and changing lanes
+우리는 이 세 가지 움직임, 비상 정지, 속도 유지 및 차선 변경을 위해 종단 센서와 측면 센서와 넓은 시야각 센서가 필요합니다
+
+Already from this small set of ODD requirements we see a large variety of sensor requirements that arise
+이미 이 작은 ODD 요구 사항 세트에서 우리는 발생하는 다양한 센서 요구 사항을 볼 수 있습니다
+
+Let's discuss the urban scenario next
+다음에 도시 시나리오에 대해 논의해 봅시다
+
+The urban scenario as we discussed before is a moderate volume, moderate traffic scenario with fewer lanes on the highway case but with the added complexity of pedestrians
+우리가 전에 논의했던 도시 시나리오는 고속도로 케이스의 차선이 적지만 보행자의 복잡성을 더한 적당한 양의 적당한 교통 시나리오이다
+
+There are six types of basic maneuvers here
+여기에는 여섯 가지 유형의 기본 기동이 있다
+
+Obviously, we can still perform emergency stop, maintain speed and lane changes but we also have scenarios such as overtaking a parked car, left and right turns at intersections and more complex maneuvers through intersections such as roundabouts
+분명히, 우리는 여전히 비상 정지를 수행하고, 속도와 차선 변경을 유지할 수 있지만, 주차된 차를 추월하고, 교차로에서 좌우로 회전하고, 로터리와 같은 교차로를 통과하는 더 복잡한 기동과 같은 시나리오도 있습니다
+
+In fact, for the first three basic maneuvers, the coverage analysis is pretty much the same as the highway analysis but since we are not moving as quickly, we don't need the same extent for our long-range sensing
+사실, 처음 세 가지 기본 기동의 경우, 커버리지 분석은 고속도로 분석과 거의 동일하지만 우리가 그렇게 빨리 움직이지 않기 때문에 장거리 감지를 위해 같은 정도가 필요하지 않습니다
+
+Let's discuss the overtake maneuver next
+다음에 추월 기동에 대해 논의해 봅시다
+
+More specifically, consider a case where you have to overtake a parked car
+더 구체적으로, 주차된 차를 추월해야 하는 경우를 고려해 보세요
+
+Longitudinally, we definitely need to sense the parked car as well as look for oncoming traffic
+세로로, 우리는 확실히 주차된 차를 감지하고 다가오는 교통 체증을 찾아야 한다
+
+So, we need both sensors, wide short-range sensors to detect the parked car and narrow long-range sensors to identify if oncoming traffic is approaching
+그래서, 우리는 주차된 차를 감지하기 위해 두 센서, 넓은 단거리 센서, 다가오는 교통량이 접근하고 있는지 식별하기 위해 좁은 장거리 센서가 필요합니다
+
+And laterally, we'll need to observe beyond the adjacent lanes for merging vehicles as we did in the highway case
+그리고 측면으로, 우리는 고속도로 사건에서 그랬던 것처럼 차량을 병합하기 위해 인접한 차선 너머를 관찰해야 할 것이다
+
+For intersections, we need to have near omni-directional sensing for all kinds of movements that can occur
+교차로의 경우, 우리는 발생할 수 있는 모든 종류의 움직임에 대해 거의 전방향 감지를 가져야 한다
+
+Approaching vehicles, nearby pedestrians, doing turns and much more
+차량 접근, 인근 보행자, 회전 등
+
+Finally, for roundabouts we need a wide-range, short distance sensor laterally since the traffic is slow but we also need a wide-range short distance sensor longitudinally because of how movement around the roundabout occurs
+마지막으로, 로터리의 경우 트래픽이 느리기 때문에 측면적으로 광거리 단거리 센서가 필요하지만 로터리 주위의 움직임이 발생하기 때문에 장거리 단거리 센서도 필요합니다
+
+We need to sense all of the incoming traffic flowing through the roundabout to make proper decisions
+우리는 적절한 결정을 내리기 위해 로터리를 통해 흐르는 들어오는 모든 교통을 감지해야 한다
+
+And so we end up with this overall coverage diagram for the urban case
+그래서 우리는 도시 사건에 대한 전반적인 커버리지 다이어그램으로 끝납니다
+
+The main difference with respect to highway coverage is because of the sensing we require for movement at intersections and at roundabouts and for the overtaking maneuver
+고속도로 커버리지와 관련된 주요 차이점은 교차로와 로터리에서의 움직임과 추월 기동에 필요한 감지 때문입니다
+
+In fact, the highway case is almost entirely covered by the urban requirements
+사실, 고속도로 사건은 거의 전적으로 도시 요구 사항으로 덮여 있다
+
+Let's summarize the coverage analysis
+커버리지 분석을 요약해 봅시다
+
+For all of the maneuvers we do, we need long range sensors which typically have shorter angular field of view and wide angular field of view sensors which typically have medium to short-range sensing
+우리가 하는 모든 기동에 대해, 우리는 일반적으로 더 짧은 각 시야를 가진 장거리 센서와 일반적으로 중거리에서 단거리 감지를 가진 넓은 각도 시야 센서가 필요합니다
+
+As the scenarios become more complex, we saw the need for full 360 degrees sensor coverage on the short scale out to about 50 meters and much longer range requirements in the longitudinal direction
+시나리오가 더 복잡해짐에 따라, 우리는 약 50미터의 짧은 규모로 전체 360도 센서 커버리지와 종단 방향으로 훨씬 더 긴 범위의 요구 사항이 필요하다는 것을 보았다
+
+We can also add even shorter range sensors like sonar which are useful in parking scenarios and so in the end our sensor configuration looks something like this diagram
+우리는 또한 주차 시나리오에 유용한 소나와 같은 더 짧은 범위의 센서를 추가할 수 있으므로 결국 센서 구성은 이 다이어그램과 비슷해 보입니다
+
+To summarize, our choice of sensors should be driven by the requirements of the maneuvers we want to execute and it should include both long-range sensors for longitudinal dangers and wide field of view sensors for omnidirectional perception
+요약하자면, 센서 선택은 우리가 실행하려는 기동의 요구 사항에 의해 주도되어야 하며 종방향 위험을 위한 장거리 센서와 전방향 인식을 위한 넓은 시야각 센서를 모두 포함해야 합니다
+
+The final choice of configurations also depends on our requirements for operating conditions, sensor redundancy due to failures and on budget
+구성의 최종 선택은 또한 작동 조건, 고장으로 인한 센서 중복 및 예산에 대한 요구 사항에 따라 다릅니다
+
+There is no single answer to which sensors are needed for a self-driving car
+자율주행 자동차에 어떤 센서가 필요한지는 단 하나의 해답이 없다
+
+In this video, you learned how to select a hardware configuration by doing sensor coverage analysis both for longitudinal and lateral cases for highway and urban driving
+이 비디오에서는 고속도로와 도시 운전의 종단 및 측면 사례 모두에 대한 센서 커버리지 분석을 수행하여 하드웨어 구성을 선택하는 방법을 배웠습니다
+
+In the next video, we'll study a modular software architecture for a typical autonomous driving stack
+다음 비디오에서, 우리는 전형적인 자율주행 스택을 위한 모듈식 소프트웨어 아키텍처를 연구할 것이다
+
+See you then
+그때 보자
